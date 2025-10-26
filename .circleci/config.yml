@@ -7,15 +7,44 @@ jobs:
       - image: cimg/python:3.11
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
       - run:
           name: Install dependencies
           command: pip install -r requirements.txt
+      - save_cache:
+          paths:
+            - /home/circleci/.cache/pip
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
       - run:
           name: Run tests
           command: pytest -v
 
+  lint:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+      - save_cache:
+          paths:
+            - /home/circleci/.cache/pip
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: Check code formatting with black
+          command: black --check .
+
 workflows:
   version: 2
-  build-and-test:
+  build-test-lint:
     jobs:
       - test
+      - lint
